@@ -291,7 +291,7 @@
     <h1>シフトカレンダー</h1>
     <p>勤務表 → Googleカレンダー</p>
   </div>
-  <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-right:8px;">v1.3</div>
+  <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-right:8px;">v1.4</div>
   <div class="step-dots">
     <div class="dot active" id="dot1"></div>
     <div class="dot" id="dot2"></div>
@@ -713,13 +713,23 @@ function checkToken() {
         if (b.workMonth)  document.getElementById('work-month').value  = b.workMonth;
         if (b.colorId)    selectedColorId = b.colorId;
         localStorage.removeItem('shift_backup');
-        // Step3に直接遷移
         if (shifts.length > 0) {
           renderShiftList();
-          goTo(3);
+          // Step1→2→3と順に状態を更新してStep3へ
+          [1,2,3].forEach(s => {
+            document.getElementById(`sec${s}`).classList.remove('active');
+            document.getElementById(`dot${s}`).classList.remove('active','done');
+            document.getElementById(`dot${s}`).classList.add(s < 3 ? 'done' : 'active');
+          });
+          document.getElementById('sec3').classList.add('active');
+          currentStep = 3;
+          renderColorGrid();
+          showLoggedIn();
+          loadCalendars();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
         }
-      } catch(e) {}
+      } catch(e) { console.error('復元エラー', e); }
     }
     if (currentStep === 3) { showLoggedIn(); loadCalendars(); }
   }
