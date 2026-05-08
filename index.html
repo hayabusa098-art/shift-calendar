@@ -291,7 +291,7 @@
     <h1>シフトカレンダー</h1>
     <p>勤務表 → Googleカレンダー</p>
   </div>
-  <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-right:8px;">v1.7</div>
+  <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-right:8px;">v1.8</div>
   <div class="step-dots">
     <div class="dot active" id="dot1"></div>
     <div class="dot" id="dot2"></div>
@@ -782,6 +782,7 @@ async function loadCalendars() {
         document.querySelectorAll('.cal-item').forEach(el => el.classList.remove('selected'));
         div.classList.add('selected');
         document.getElementById('to-step4-btn').disabled = false;
+        document.getElementById('to-step4-btn').onclick = () => goTo(4);
       });
       listEl.appendChild(div);
     });
