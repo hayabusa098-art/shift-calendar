@@ -291,7 +291,7 @@
     <h1>シフトカレンダー</h1>
     <p>勤務表 → Googleカレンダー</p>
   </div>
-  <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-right:8px;">v2.0</div>
+  <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-right:8px;">v2.2</div>
   <div class="step-dots">
     <div class="dot active" id="dot1"></div>
     <div class="dot" id="dot2"></div>
@@ -357,12 +357,21 @@
   <div class="section" id="sec2">
     <div class="step-label">Step 2 / 4</div>
     <h2>確認・編集</h2>
-    <p class="sub">読み取り内容を確認してください。記号を変えると時刻が自動で更新されます。</p>
+    <p class="sub">AIの読み取り結果を確認してください。日付をタップして記号を変更・削除できます。</p>
 
     <div id="note-box"></div>
-    <div id="shifts-list"></div>
+    <div id="cal-view"></div>
 
-    <button class="btn btn-secondary" id="add-shift-btn" style="margin-bottom:16px;">＋ シフトを追加</button>
+    <!-- 編集モーダル -->
+    <div id="edit-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:200; align-items:center; justify-content:center;">
+      <div style="background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:20px; width:300px; max-width:90vw;">
+        <div id="modal-date" style="font-family:var(--font-mono); font-size:13px; color:var(--text2); margin-bottom:12px;"></div>
+        <div style="font-size:15px; font-weight:700; margin-bottom:16px;">記号を選択</div>
+        <div id="modal-codes" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;"></div>
+        <button id="modal-delete" class="btn btn-ghost" style="width:100%; color:var(--danger); border-color:var(--danger); margin-bottom:8px;">この日のシフトを削除</button>
+        <button id="modal-cancel" class="btn btn-ghost" style="width:100%;">キャンセル</button>
+      </div>
+    </div>
 
     <div class="action-row">
       <button class="btn btn-ghost" onclick="goTo(1)">←</button>
@@ -594,7 +603,7 @@ ${shiftKeys}
       return { date: s.date, code: s.code, start: m.start || '', end: m.end || '', note: s.note || '', special: !!m.title };
     });
     setStatus('');
-    renderShiftList();
+    renderCalView();
     goTo(2);
   } catch (err) {
     setStatus('解析に失敗しました: ' + err.message, true);
@@ -603,80 +612,120 @@ ${shiftKeys}
   }
 });
 
-// ── Step 2: Edit ─────────────────────────────
+// ── Step 2: Calendar View ────────────────────
 function getWd(dateStr) {
   try { return WEEKDAYS[new Date(dateStr).getDay()]; } catch { return ''; }
 }
-function wdColor(wd) {
-  return wd === '日' ? '#ff6b6b' : wd === '土' ? '#4af0ff' : 'var(--text2)';
-}
 
-function renderShiftList() {
-  const list = document.getElementById('shifts-list');
-  list.innerHTML = '';
+let editingDate = null;
+
+function renderCalView() {
+  const wrap = document.getElementById('cal-view');
   const warns = shifts.filter(s => s.note === '要確認').length;
   document.getElementById('note-box').innerHTML =
-    `<strong style="color:var(--accent)">✅ ${shifts.length}件検出</strong>${warns ? `　<span class="warn-badge">⚠ ${warns}件要確認</span>` : ''}。内容を確認・編集してください。`;
+    `<strong style="color:var(--accent)">✅ ${shifts.length}件検出</strong>${warns ? `　<span class="warn-badge">⚠ ${warns}件要確認</span>` : ''}。日付をタップして修正できます。`;
 
-  shifts.forEach((s, i) => {
-    const wd = getWd(s.date);
-    const card = document.createElement('div');
-    card.className = 'shift-card';
-    card.innerHTML = `
-      <div class="shift-card-header">
-        <span class="shift-date-display">${s.date}</span>
-        <span class="shift-wd" style="color:${wdColor(wd)}">${wd}</span>
-        <span class="shift-time-display">${s.start}–${s.end}</span>
-      </div>
-      <div class="shift-card-body">
-        <div class="mini-field">
-          <label>日付</label>
-          <input type="date" value="${s.date}" data-i="${i}" data-f="date">
-        </div>
-        <div class="mini-field">
-          <label>記号</label>
-          <select data-i="${i}" data-f="code">
-            ${Object.keys(SHIFT_MASTER).map(k => `<option value="${k}"${k===s.code?' selected':''}>${k}</option>`).join('')}
-          </select>
-        </div>
-        <div class="mini-field full">
-          <label>メモ${s.note==='要確認'?'　<span class="warn-badge">⚠ 要確認</span>':''}</label>
-          <input type="text" value="${s.note}" placeholder="メモ（任意）" data-i="${i}" data-f="note">
-        </div>
-      </div>
-      <button class="del-btn" data-i="${i}">✕</button>
+  const workMonth = document.getElementById('work-month').value;
+  if (!workMonth) return;
+  const [y, m] = workMonth.split('-').map(Number);
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const firstDay = new Date(y, m - 1, 1).getDay();
+
+  const shiftMap = {};
+  shifts.forEach(s => { shiftMap[s.date] = s; });
+
+  wrap.innerHTML = `
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;font-family:var(--font-mono);">${y}年${m}月</div>
+    <div class="cal-header-row">
+      <div class="cal-header-cell sun">日</div>
+      <div class="cal-header-cell">月</div>
+      <div class="cal-header-cell">火</div>
+      <div class="cal-header-cell">水</div>
+      <div class="cal-header-cell">木</div>
+      <div class="cal-header-cell">金</div>
+      <div class="cal-header-cell sat">土</div>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  `;
+
+  const grid = document.getElementById('cal-grid');
+  for (let i = 0; i < firstDay; i++) {
+    const blank = document.createElement('div');
+    blank.className = 'cal-cell empty';
+    grid.appendChild(blank);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const wd = new Date(y, m-1, d).getDay();
+    const s = shiftMap[dateStr];
+    const isSun = wd === 0, isSat = wd === 6;
+    const master = s ? (SHIFT_MASTER[s.code] || {}) : {};
+    const isSpecial = s && master.title && !master.start;
+    const timeStr = s && !isSpecial && s.start ? s.start.slice(0,5) + '-' + s.end.slice(0,5) : '';
+
+    const cell = document.createElement('div');
+    cell.className = `cal-cell${s ? ' has-shift' : ''}${isSun ? ' is-sun' : ''}${isSat ? ' is-sat' : ''}`;
+    cell.innerHTML = `
+      <div class="cal-day">${d}</div>
+      ${s ? `<div class="cal-code${isSpecial?' special':''}">${s.code}</div>` : ''}
+      ${timeStr ? `<div class="cal-time">${timeStr}</div>` : ''}
     `;
-    list.appendChild(card);
-  });
-
-  list.querySelectorAll('input, select').forEach(el => {
-    el.addEventListener('change', () => {
-      const i = parseInt(el.dataset.i), f = el.dataset.f;
-      shifts[i][f] = el.value;
-      if (f === 'code') {
-        const m = SHIFT_MASTER[el.value] || {};
-        shifts[i].start = m.start || '';
-        shifts[i].end = m.end || '';
-        renderShiftList();
-      }
-      if (f === 'date') renderShiftList();
-    });
-  });
-
-  list.querySelectorAll('.del-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      shifts.splice(parseInt(btn.dataset.i), 1);
-      renderShiftList();
-    });
-  });
+    cell.addEventListener('click', () => openEditModal(dateStr, wd));
+    grid.appendChild(cell);
+  }
 }
 
-document.getElementById('add-shift-btn').addEventListener('click', () => {
-  const last = shifts[shifts.length - 1];
-  const m = SHIFT_MASTER['D'];
-  shifts.push({ date: last ? last.date : document.getElementById('work-month').value + '-01', code: 'D', start: m.start, end: m.end, note: '' });
-  renderShiftList();
-  setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
+function openEditModal(dateStr, wd) {
+  editingDate = dateStr;
+  const wdName = WEEKDAYS[wd];
+  const wdColor = wd===0?'#ff6b6b':wd===6?'#4af0ff':'var(--text2)';
+  document.getElementById('modal-date').innerHTML =
+    `${dateStr}（<span style="color:${wdColor}">${wdName}</span>）`;
+
+  const codesWrap = document.getElementById('modal-codes');
+  codesWrap.innerHTML = '';
+  const current = shifts.find(s => s.date === dateStr);
+
+  Object.keys(SHIFT_MASTER).forEach(code => {
+    const btn = document.createElement('button');
+    btn.style.cssText = `height:40px;min-width:52px;padding:0 10px;border-radius:8px;font-family:var(--font-mono);font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text);transition:all 0.1s;`;
+    if (current && current.code === code) {
+      btn.style.borderColor = 'var(--accent)';
+      btn.style.color = 'var(--accent)';
+    }
+    btn.textContent = code;
+    btn.addEventListener('click', () => {
+      const master = SHIFT_MASTER[code] || {};
+      const idx = shifts.findIndex(s => s.date === dateStr);
+      if (idx >= 0) {
+        shifts[idx] = { ...shifts[idx], code, start: master.start||'', end: master.end||'' };
+      } else {
+        shifts.push({ date: dateStr, code, start: master.start||'', end: master.end||'', note: '' });
+        shifts.sort((a,b) => a.date.localeCompare(b.date));
+      }
+      closeEditModal();
+      renderCalView();
+    });
+    codesWrap.appendChild(btn);
+  });
+
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').style.display = 'none';
+  editingDate = null;
+}
+
+document.getElementById('modal-delete').addEventListener('click', () => {
+  shifts = shifts.filter(s => s.date !== editingDate);
+  closeEditModal();
+  renderCalView();
+});
+document.getElementById('modal-cancel').addEventListener('click', closeEditModal);
+document.getElementById('edit-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('edit-modal')) closeEditModal();
 });
 
 document.getElementById('to-step3-btn').addEventListener('click', () => {
@@ -745,7 +794,7 @@ function checkToken() {
         if (b.colorId)    selectedColorId = b.colorId;
         localStorage.removeItem('shift_backup');
         if (shifts.length > 0) {
-          renderShiftList();
+          renderCalView();
           // Step1→2→3と順に状態を更新してStep3へ
           [1,2,3].forEach(s => {
             document.getElementById(`sec${s}`).classList.remove('active');
@@ -842,16 +891,19 @@ async function doRegister() {
     const master = SHIFT_MASTER[s.code] || {};
     const isSpecial = master.title && !master.start;
     const title = isSpecial ? master.title : `${s.code} ${s.start}–${s.end}`;
+    const noReminder = { useDefault: false, overrides: [] };
     const body = isSpecial ? {
       summary: title,
       start: { date: s.date },
       end:   { date: s.date },
       colorId: selectedColorId,
+      reminders: noReminder,
     } : {
       summary: title,
       start: { dateTime: `${s.date}T${s.start}:00`, timeZone: 'Asia/Tokyo' },
       end:   { dateTime: `${s.date}T${s.end}:00`,   timeZone: 'Asia/Tokyo' },
       colorId: selectedColorId,
+      reminders: noReminder,
     };
     if (s.note) body.description = s.note;
     try {
