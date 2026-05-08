@@ -291,6 +291,7 @@
     <h1>シフトカレンダー</h1>
     <p>勤務表 → Googleカレンダー</p>
   </div>
+  <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-right:8px;">v1.3</div>
   <div class="step-dots">
     <div class="dot active" id="dot1"></div>
     <div class="dot" id="dot2"></div>
@@ -424,7 +425,7 @@
 const CLIENT_ID = '255507800952-g6slstcrenqml9uk58l8k7f9naf3lr3o.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
 const GEMINI_API_KEY = 'AIzaSyBu1PfKjye0e7Po4QkqaJU4X9sI8ZGNROE';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 const SHIFT_MASTER = {
   'A':  { start: '07:00', end: '16:00' },
@@ -676,6 +677,14 @@ function renderColorGrid() {
 }
 
 document.getElementById('login-btn').addEventListener('click', () => {
+  // ログイン前にシフトデータ・入力値・ステップを保存
+  localStorage.setItem('shift_backup', JSON.stringify({
+    shifts,
+    workerName: document.getElementById('worker-name').value,
+    workMonth: document.getElementById('work-month').value,
+    colorId: selectedColorId,
+    step: currentStep
+  }));
   const redirectUri = window.location.href.split('?')[0].split('#')[0];
   const params = new URLSearchParams({
     client_id: CLIENT_ID,
@@ -693,6 +702,25 @@ function checkToken() {
     const params = new URLSearchParams(hash.replace('#', ''));
     accessToken = params.get('access_token');
     history.replaceState(null, '', window.location.pathname);
+
+    // ログイン前のデータを復元
+    const backup = localStorage.getItem('shift_backup');
+    if (backup) {
+      try {
+        const b = JSON.parse(backup);
+        shifts = b.shifts || [];
+        if (b.workerName) document.getElementById('worker-name').value = b.workerName;
+        if (b.workMonth)  document.getElementById('work-month').value  = b.workMonth;
+        if (b.colorId)    selectedColorId = b.colorId;
+        localStorage.removeItem('shift_backup');
+        // Step3に直接遷移
+        if (shifts.length > 0) {
+          renderShiftList();
+          goTo(3);
+          return;
+        }
+      } catch(e) {}
+    }
     if (currentStep === 3) { showLoggedIn(); loadCalendars(); }
   }
 }
