@@ -291,7 +291,7 @@
     <h1>シフトカレンダー</h1>
     <p>勤務表 → Googleカレンダー</p>
   </div>
-  <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-right:8px;">v1.8</div>
+  <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-right:8px;">v1.9</div>
   <div class="step-dots">
     <div class="dot active" id="dot1"></div>
     <div class="dot" id="dot2"></div>
@@ -540,18 +540,34 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
   setStatus('⏳ AIが解析中です...');
 
   const shiftKeys = Object.keys(SHIFT_MASTER).join('、');
-  const prompt = `この画像はとちの実保育園のシフト表です。
-対象者「${workerName}」の${workMonth}のシフトを読み取ってください。
+  const prompt = `この画像はとちの実保育園のシフト表（勤務表）です。
 
-シフト記号：${shiftKeys}
-×・有休・振休・公休などシフトがない日は含めないでください。
+【タスク】
+対象者「${workerName}」の${workMonth}のシフトを正確に読み取ってください。
 
-JSON形式のみで応答してください（説明・マークダウン不要）：
+【シフト表の構造】
+- 左端の列に職員名が縦に並んでいます
+- 上部に日付（1〜31）が横に並んでいます
+- 各セルに勤務記号（A〜G、+付きも含む）が入っています
+- 空欄・×・有休・振休・公休・半は「休み」なので含めないでください
+
+【使用される記号】
+${shiftKeys}
+※記号の後ろに「+」がつく場合があります（例：D+、C+）
+※小さい上付き文字の場合も「+」として読んでください
+
+【重要な注意事項】
+1. 必ず「${workerName}」の行のみを読み取ること（他の職員の行を混同しない）
+2. 空欄のセルは絶対に含めない
+3. 日付は${workMonth}の実際のカレンダーに従うこと
+4. 読み取りが不確かな場合はnoteに「要確認」と記載
+5. 土日でも記号があれば含める、なければ含めない
+
+【出力形式】JSONのみ（説明・マークダウン不要）：
 {"shifts":[{"date":"${workMonth}-01","code":"D+","note":""}]}
 
 - dateはYYYY-MM-DD形式
-- codeは上記記号のいずれか
-- 読み取れない場合はnoteに「要確認」`;
+- codeは上記記号のいずれか（必ず大文字）`;
 
   try {
     const res = await fetch(getGeminiUrl(), {
