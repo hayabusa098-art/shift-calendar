@@ -2,8 +2,12 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>シフト → Googleカレンダー</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f0f11">
+<title>シフトカレンダー</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -19,289 +23,263 @@
     --text2: #888890;
     --text3: #555560;
     --danger: #ff6b6b;
-    --radius: 12px;
+    --warn: #f6bf26;
+    --radius: 16px;
     --font-mono: 'DM Mono', monospace;
     --font: 'Noto Sans JP', sans-serif;
+    --tap: 52px;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
   body {
     background: var(--bg);
     color: var(--text);
     font-family: var(--font);
     min-height: 100vh;
-    padding: 0;
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   /* Header */
   header {
-    padding: 28px 32px 20px;
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(15,15,17,0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 14px 20px;
     border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 14px;
+    display: flex; align-items: center; gap: 12px;
   }
-  .logo {
-    width: 36px; height: 36px;
-    background: var(--accent);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-  }
-  header h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
-  header p { font-size: 12px; color: var(--text2); margin-top: 1px; }
-  .step-indicator {
-    margin-left: auto;
-    display: flex; gap: 6px; align-items: center;
-  }
-  .step-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--border);
-    transition: background 0.3s;
-  }
-  .step-dot.active { background: var(--accent); }
-  .step-dot.done { background: var(--text3); }
+  .logo { font-size: 24px; }
+  header h1 { font-size: 16px; font-weight: 700; }
+  header p { font-size: 11px; color: var(--text2); }
+  .step-dots { margin-left: auto; display: flex; gap: 5px; align-items: center; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); transition: all 0.3s; }
+  .dot.active { background: var(--accent); width: 20px; border-radius: 4px; }
+  .dot.done { background: var(--text3); }
 
   /* Main */
-  main { max-width: 780px; margin: 0 auto; padding: 32px 24px 80px; }
+  main { padding: 20px 16px 40px; max-width: 480px; margin: 0 auto; }
 
   /* Section */
-  .section { display: none; }
+  .section { display: none; animation: fadeIn 0.25s ease; }
   .section.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
   /* Step label */
   .step-label {
     font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--accent);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    margin-bottom: 10px;
+    font-size: 10px; color: var(--accent);
+    letter-spacing: 0.14em; text-transform: uppercase;
+    margin-bottom: 8px;
   }
-  h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.5px; }
-  .sub { font-size: 13px; color: var(--text2); margin-bottom: 28px; line-height: 1.6; }
+  h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 5px; }
+  .sub { font-size: 13px; color: var(--text2); margin-bottom: 24px; line-height: 1.6; }
+
+  /* Tip */
+  .tip {
+    background: rgba(124,255,164,0.06);
+    border: 1px solid rgba(124,255,164,0.18);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 12px; color: var(--text2); line-height: 1.7;
+    margin-bottom: 16px;
+  }
+  .tip strong { color: var(--accent); }
 
   /* Card */
   .card {
     background: var(--bg2);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 20px;
-    margin-bottom: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
   }
 
-  /* Upload zone */
-  .upload-zone {
-    border: 1.5px dashed var(--border);
-    border-radius: var(--radius);
-    padding: 48px 24px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-  }
-  .upload-zone:hover, .upload-zone.drag {
-    border-color: var(--accent);
-    background: rgba(124,255,164,0.04);
-  }
-  .upload-zone .icon { font-size: 36px; margin-bottom: 12px; }
-  .upload-zone p { font-size: 14px; color: var(--text2); }
-  .upload-zone strong { color: var(--text); }
-  .upload-zone small { font-size: 11px; color: var(--text3); margin-top: 4px; display: block; }
-  #file-input { display: none; }
-
-  #preview-wrap { display: none; margin-top: 16px; text-align: center; }
-  #preview-img { max-width: 100%; max-height: 220px; border-radius: 8px; border: 1px solid var(--border); }
-
-  /* Input fields */
-  .field { margin-bottom: 16px; }
-  .field label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 6px; font-family: var(--font-mono); }
-  .field input, .field select {
-    width: 100%;
+  /* Upload buttons */
+  .upload-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .upload-btn {
     background: var(--bg3);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 14px;
-    color: var(--text);
-    font-family: var(--font);
-    transition: border-color 0.2s;
-    appearance: none;
+    border-radius: 12px;
+    padding: 18px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
   }
-  .field input:focus, .field select:focus {
-    outline: none;
-    border-color: var(--accent);
+  .upload-btn:active { background: var(--bg2); border-color: var(--accent); transform: scale(0.97); }
+  .upload-btn .icon { font-size: 28px; }
+  .upload-btn span { font-size: 13px; font-weight: 500; }
+  .upload-btn small { font-size: 11px; color: var(--text3); }
+  #file-input, #camera-input { display: none; }
+
+  #preview-wrap { display: none; margin-bottom: 12px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+  #preview-img { width: 100%; max-height: 200px; object-fit: cover; display: block; }
+  .preview-change {
+    background: var(--bg3); border: none; color: var(--text2);
+    width: 100%; padding: 10px; font-size: 12px; cursor: pointer;
+    font-family: var(--font);
   }
 
-  /* Tip box */
-  .tip {
-    background: rgba(124,255,164,0.06);
-    border: 1px solid rgba(124,255,164,0.2);
-    border-radius: 8px;
-    padding: 12px 16px;
-    font-size: 12px;
-    color: var(--text2);
-    line-height: 1.7;
-    margin-bottom: 16px;
+  /* Fields */
+  .field { margin-bottom: 14px; }
+  .field label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 6px; font-family: var(--font-mono); }
+  .field input {
+    width: 100%; height: var(--tap);
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 12px; padding: 0 16px;
+    font-size: 16px; color: var(--text); font-family: var(--font);
+    transition: border-color 0.2s;
   }
-  .tip strong { color: var(--accent); }
+  .field input:focus { outline: none; border-color: var(--accent); }
 
   /* Buttons */
   .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 14px; font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-    border: none;
-    font-family: var(--font);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    height: var(--tap); padding: 0 20px; border-radius: 12px;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    transition: all 0.15s; border: none; font-family: var(--font);
+    width: 100%; user-select: none;
   }
-  .btn-primary {
-    background: var(--accent);
-    color: #0f0f11;
-    width: 100%;
-    font-weight: 700;
-  }
-  .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
-  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
-  .btn-secondary {
-    background: var(--bg3);
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
-  .btn-secondary:hover { border-color: var(--text2); }
-  .btn-danger {
-    background: transparent;
-    color: var(--danger);
-    border: 1px solid transparent;
-    padding: 4px 8px;
-    font-size: 12px;
-    border-radius: 6px;
-  }
-  .btn-danger:hover { background: rgba(255,107,107,0.1); }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: #0f0f11; }
+  .btn-primary:disabled { opacity: 0.35; }
+  .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
 
   /* Status */
   #status {
-    display: none;
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-size: 13px;
-    margin-top: 12px;
-    background: var(--bg3);
-    color: var(--text2);
+    display: none; margin-top: 12px;
+    padding: 12px 16px; border-radius: 10px;
+    font-size: 13px; line-height: 1.5;
+    background: var(--bg3); color: var(--text2);
     border: 1px solid var(--border);
   }
   #status.error { background: rgba(255,107,107,0.1); color: var(--danger); border-color: rgba(255,107,107,0.3); }
 
-  /* Google auth */
-  .auth-card {
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    display: flex; align-items: center; gap: 16px;
+  /* Action row */
+  .action-row { display: grid; grid-template-columns: auto 1fr; gap: 10px; margin-top: 16px; }
+  .action-row .btn-ghost { width: var(--tap); padding: 0; flex-shrink: 0; }
+
+  /* Shift cards (mobile-friendly edit) */
+  .shift-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px;
+    margin-bottom: 10px; position: relative;
+  }
+  .shift-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .shift-date-display { font-family: var(--font-mono); font-size: 14px; font-weight: 500; }
+  .shift-wd { font-size: 12px; font-weight: 700; margin-left: 4px; }
+  .shift-time-display { margin-left: auto; font-family: var(--font-mono); font-size: 12px; color: var(--accent2); }
+  .shift-card-body { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .mini-field label { font-size: 11px; color: var(--text3); display: block; margin-bottom: 4px; font-family: var(--font-mono); }
+  .mini-field input, .mini-field select {
+    width: 100%; height: 40px;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 0 10px;
+    font-size: 15px; color: var(--text); font-family: var(--font);
+  }
+  .mini-field input:focus, .mini-field select:focus { outline: none; border-color: var(--accent); }
+  .mini-field.full { grid-column: 1 / -1; }
+  .del-btn {
+    position: absolute; top: 12px; right: 12px;
+    background: none; border: none; color: var(--text3);
+    font-size: 18px; cursor: pointer; padding: 4px;
+    line-height: 1;
+  }
+  .warn-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-family: var(--font-mono);
+    padding: 2px 8px; border-radius: 999px;
+    background: rgba(246,191,38,0.12); color: var(--warn);
+    margin-left: 6px;
+  }
+
+  /* Note box */
+  #note-box {
     margin-bottom: 16px;
+    padding: 12px 14px;
+    background: rgba(124,255,164,0.06);
+    border: 1px solid rgba(124,255,164,0.18);
+    border-radius: 12px;
+    font-size: 13px; color: var(--text2); line-height: 1.6;
+  }
+
+  /* Auth */
+  .auth-card {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 14px;
   }
   .auth-icon { font-size: 28px; flex-shrink: 0; }
-  .auth-status { flex: 1; }
-  .auth-status p { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  .auth-info { flex: 1; }
+  .auth-info p { font-size: 12px; color: var(--text2); margin-top: 2px; }
   .badge {
     display: inline-flex; align-items: center; gap: 4px;
-    font-size: 11px; font-weight: 500; font-family: var(--font-mono);
-    padding: 3px 8px; border-radius: 999px;
+    font-size: 11px; font-family: var(--font-mono);
+    padding: 3px 9px; border-radius: 999px;
   }
   .badge-ok { background: rgba(124,255,164,0.12); color: var(--accent); }
   .badge-ng { background: rgba(255,107,107,0.12); color: var(--danger); }
+  #login-btn { height: 40px; width: auto; font-size: 13px; flex-shrink: 0; }
 
-  /* Shifts table */
-  #shifts-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th {
-    text-align: left; padding: 10px 12px;
-    font-family: var(--font-mono); font-size: 11px; color: var(--text3);
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
+  /* Calendar list */
+  .cal-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px; border: 1px solid var(--border); border-radius: 12px;
+    cursor: pointer; transition: all 0.15s; margin-bottom: 8px;
   }
-  td { padding: 8px 12px; border-bottom: 1px solid rgba(46,46,52,0.6); vertical-align: middle; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: rgba(255,255,255,0.02); }
-  td input, td select {
-    background: var(--bg3);
-    border: 1px solid transparent;
-    border-radius: 6px;
-    padding: 5px 8px;
-    font-size: 13px;
-    color: var(--text);
-    font-family: var(--font);
-    transition: border-color 0.15s;
-  }
-  td input:focus, td select:focus { outline: none; border-color: var(--accent); }
-  .shift-code {
-    font-family: var(--font-mono);
-    font-weight: 500;
-    color: var(--accent2);
-    font-size: 14px;
-  }
-  .shift-time { font-family: var(--font-mono); font-size: 12px; color: var(--text2); }
+  .cal-item:active { background: var(--bg3); }
+  .cal-item.selected { border-color: var(--accent); background: rgba(124,255,164,0.04); }
+  .cal-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+  .cal-name { font-size: 15px; }
+  .cal-check { margin-left: auto; color: var(--accent); font-size: 18px; display: none; }
+  .cal-item.selected .cal-check { display: block; }
 
-  /* Color picker */
-  .color-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  /* Color grid */
+  .color-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
   .color-opt {
-    width: 32px; height: 32px; border-radius: 50%;
-    cursor: pointer; border: 2px solid transparent;
-    transition: all 0.15s;
-    position: relative;
+    width: 38px; height: 38px; border-radius: 50%;
+    cursor: pointer; border: 3px solid transparent;
+    transition: all 0.15s; position: relative;
   }
-  .color-opt:hover { transform: scale(1.1); }
-  .color-opt.selected { border-color: var(--text); transform: scale(1.15); }
+  .color-opt:active { transform: scale(0.9); }
+  .color-opt.selected { border-color: white; transform: scale(1.1); }
   .color-opt.selected::after {
-    content: '✓';
-    position: absolute; top: 50%; left: 50%;
+    content: '✓'; position: absolute; top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 14px; color: white; font-weight: 700;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    font-size: 16px; color: white; font-weight: 700;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
   }
 
   /* Summary */
-  .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .summary-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
   .summary-row:last-child { border-bottom: none; }
-  .summary-row span:first-child { color: var(--text2); }
-  .summary-row span:last-child { font-weight: 500; }
+  .summary-row .label { color: var(--text2); font-size: 13px; }
 
-  /* Action row */
-  .action-row { display: flex; gap: 10px; margin-top: 16px; }
-  .action-row .btn { flex: 1; }
-
-  /* Result */
+  /* Results */
   .result-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 8px 0; font-size: 13px;
-    border-bottom: 1px solid rgba(46,46,52,0.5);
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid rgba(46,46,52,0.5);
+    font-size: 13px; line-height: 1.4;
   }
   .result-item:last-child { border-bottom: none; }
-  .result-ok { color: var(--accent); }
-  .result-err { color: var(--danger); }
 
-  /* Calendar selector */
-  .cal-option {
-    display: flex; align-items: center; gap: 12px;
-    padding: 12px 16px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.15s;
-    margin-bottom: 8px;
-  }
-  .cal-option:hover { border-color: var(--text2); }
-  .cal-option.selected { border-color: var(--accent); background: rgba(124,255,164,0.04); }
-  .cal-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-  .cal-name { font-size: 14px; }
-  .cal-check { margin-left: auto; color: var(--accent); display: none; }
-  .cal-option.selected .cal-check { display: block; }
+  /* Complete */
+  .complete-box { text-align: center; padding: 32px 16px; }
+  .complete-box .emoji { font-size: 52px; margin-bottom: 16px; }
+  .complete-box h3 { font-size: 20px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+  .complete-box p { font-size: 13px; color: var(--text2); line-height: 1.7; }
 
-  @media (max-width: 600px) {
-    main { padding: 20px 16px 80px; }
-    header { padding: 20px 16px 16px; }
-    h2 { font-size: 18px; }
+  /* Section label */
+  .section-label {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 10px;
   }
 </style>
 </head>
@@ -311,154 +289,138 @@
   <div class="logo">📋</div>
   <div>
     <h1>シフトカレンダー</h1>
-    <p>勤務表 → Googleカレンダー自動登録</p>
+    <p>勤務表 → Googleカレンダー</p>
   </div>
-  <div class="step-indicator">
-    <div class="step-dot active" id="dot1"></div>
-    <div class="step-dot" id="dot2"></div>
-    <div class="step-dot" id="dot3"></div>
-    <div class="step-dot" id="dot4"></div>
+  <div class="step-dots">
+    <div class="dot active" id="dot1"></div>
+    <div class="dot" id="dot2"></div>
+    <div class="dot" id="dot3"></div>
+    <div class="dot" id="dot4"></div>
   </div>
 </header>
 
 <main>
 
-  <!-- STEP 1: Upload & Analyze -->
+  <!-- STEP 1 -->
   <div class="section active" id="sec1">
-    <div class="step-label">Step 01 / 04</div>
+    <div class="step-label">Step 1 / 4</div>
     <h2>勤務表を読み込む</h2>
-    <p class="sub">勤務表の写真をアップロードしてください。AIが記号（A〜G+）と日付を自動で読み取ります。</p>
+    <p class="sub">写真を撮るかギャラリーから選んでください。</p>
 
     <div class="tip">
       <strong>📸 撮影のコツ</strong><br>
-      真上から・明るい場所で・表全体が映るように撮影すると読み取り精度が上がります。
+      真上から・明るい場所で・表全体が映るように。斜めや暗い写真は精度が下がります。
     </div>
 
-    <div class="card" style="padding:0; overflow:hidden;">
-      <div class="upload-zone" id="drop-zone">
-        <div class="icon">🗂</div>
-        <p><strong>クリックして画像を選択</strong></p>
-        <p>またはここにドラッグ＆ドロップ</p>
-        <small>JPG / PNG 対応</small>
+    <div id="preview-wrap">
+      <img id="preview-img" alt="勤務表プレビュー">
+      <button class="preview-change" id="change-photo-btn">📷 写真を撮り直す</button>
+    </div>
+
+    <div class="upload-btns" id="upload-btns">
+      <div class="upload-btn" id="camera-btn">
+        <div class="icon">📷</div>
+        <span>カメラで撮影</span>
+        <small>その場で撮る</small>
       </div>
-      <input type="file" id="file-input" accept="image/*">
-      <div id="preview-wrap"><img id="preview-img" alt="勤務表プレビュー"></div>
+      <div class="upload-btn" id="gallery-btn">
+        <div class="icon">🖼</div>
+        <span>ギャラリーから</span>
+        <small>保存済み写真</small>
+      </div>
+    </div>
+    <input type="file" id="camera-input" accept="image/*" capture="environment">
+    <input type="file" id="file-input" accept="image/*">
+
+    <div class="card">
+      <div class="field">
+        <label>対象者の名前（勤務表上の表記）</label>
+        <input type="text" id="worker-name" placeholder="例：清水 莉帆" autocomplete="off" value="菅原 恵美">
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>勤務表の年月</label>
+        <input type="month" id="work-month">
+      </div>
     </div>
 
-    <div class="field">
-      <label>対象者の名前（勤務表上の表記）</label>
-      <input type="text" id="worker-name" placeholder="例：清水 莉帆">
-    </div>
-
-    <div class="field">
-      <label>勤務表の年月（例：2026-05）</label>
-      <input type="text" id="work-month" placeholder="2026-05">
-    </div>
-
-    <button class="btn btn-primary" id="analyze-btn" disabled>
-      ✨ AIで勤務表を解析する
-    </button>
+    <button class="btn btn-primary" id="analyze-btn" disabled>✨ AIで解析する</button>
     <div id="status"></div>
   </div>
 
-  <!-- STEP 2: Confirm & Edit -->
+  <!-- STEP 2 -->
   <div class="section" id="sec2">
-    <div class="step-label">Step 02 / 04</div>
-    <h2>シフトを確認・編集</h2>
-    <p class="sub">AIが読み取った内容を確認してください。日付・記号・メモは自由に編集できます。</p>
+    <div class="step-label">Step 2 / 4</div>
+    <h2>確認・編集</h2>
+    <p class="sub">読み取り内容を確認してください。記号を変えると時刻が自動で更新されます。</p>
 
-    <div id="note-box" class="tip" style="margin-bottom:16px;"></div>
+    <div id="note-box"></div>
+    <div id="shifts-list"></div>
 
-    <div class="card" style="padding:0;">
-      <div id="shifts-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>日付</th>
-              <th>曜日</th>
-              <th>記号</th>
-              <th>開始</th>
-              <th>終了</th>
-              <th>メモ</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="shifts-body"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <button class="btn btn-secondary" id="add-row-btn" style="width:100%; margin-bottom:16px;">
-      ＋ 行を追加
-    </button>
+    <button class="btn btn-secondary" id="add-shift-btn" style="margin-bottom:16px;">＋ シフトを追加</button>
 
     <div class="action-row">
-      <button class="btn btn-secondary" onclick="goTo(1)">← 戻る</button>
-      <button class="btn btn-primary" id="to-step3-btn">次へ：カレンダー設定 →</button>
+      <button class="btn btn-ghost" onclick="goTo(1)">←</button>
+      <button class="btn btn-primary" id="to-step3-btn">カレンダー設定へ →</button>
     </div>
   </div>
 
-  <!-- STEP 3: Calendar settings -->
+  <!-- STEP 3 -->
   <div class="section" id="sec3">
-    <div class="step-label">Step 03 / 04</div>
+    <div class="step-label">Step 3 / 4</div>
     <h2>カレンダー設定</h2>
-    <p class="sub">登録先のカレンダーと色を選択してください。</p>
+    <p class="sub">登録先のカレンダーと色を選んでください。</p>
 
-    <!-- Google Auth -->
-    <div class="auth-card" id="auth-card">
+    <div class="auth-card">
       <div class="auth-icon">🔑</div>
-      <div class="auth-status">
+      <div class="auth-info">
         <div id="auth-badge" class="badge badge-ng">未ログイン</div>
-        <p id="auth-text">Googleアカウントにログインしてください</p>
+        <p id="auth-text">Googleアカウントにログイン</p>
       </div>
-      <button class="btn btn-secondary" id="login-btn" style="flex-shrink:0;">Googleでログイン</button>
+      <button class="btn btn-secondary" id="login-btn">ログイン</button>
     </div>
 
-    <!-- Calendar selector -->
-    <div class="card" id="cal-selector-wrap" style="display:none;">
-      <div class="step-label" style="margin-bottom:10px;">登録先カレンダー</div>
-      <div id="cal-list">読み込み中...</div>
+    <div id="cal-selector-wrap" style="display:none;">
+      <div class="section-label">登録先カレンダー</div>
+      <div id="cal-list"><p style="color:var(--text2);font-size:13px;padding:8px 0;">読み込み中...</p></div>
     </div>
 
-    <!-- Color picker -->
-    <div class="card">
-      <div class="step-label" style="margin-bottom:10px;">イベントの色</div>
+    <div class="card" style="margin-top:8px;">
+      <div class="section-label">イベントの色</div>
       <div class="color-grid" id="color-grid"></div>
     </div>
 
     <div class="action-row">
-      <button class="btn btn-secondary" onclick="goTo(2)">← 戻る</button>
-      <button class="btn btn-primary" id="to-step4-btn" disabled>登録内容を確認する →</button>
+      <button class="btn btn-ghost" onclick="goTo(2)">←</button>
+      <button class="btn btn-primary" id="to-step4-btn" disabled>登録内容を確認 →</button>
     </div>
   </div>
 
-  <!-- STEP 4: Confirm & Register -->
+  <!-- STEP 4 -->
   <div class="section" id="sec4">
-    <div class="step-label">Step 04 / 04</div>
+    <div class="step-label">Step 4 / 4</div>
     <h2>登録確認</h2>
-    <p class="sub">以下の内容でGoogleカレンダーに登録します。</p>
+    <p class="sub">内容を確認して登録ボタンを押してください。</p>
 
-    <div class="card">
-      <div id="confirm-summary"></div>
-    </div>
+    <div class="card" id="confirm-summary"></div>
 
     <div id="result-area" style="display:none;">
-      <div class="card">
-        <div class="step-label" style="margin-bottom:10px;">登録結果</div>
+      <div class="section-label" style="margin-top:16px;">登録結果</div>
+      <div class="card" style="padding:8px 16px;">
         <div id="result-list"></div>
       </div>
     </div>
 
-    <div class="action-row" id="register-actions">
-      <button class="btn btn-secondary" onclick="goTo(3)">← 戻る</button>
-      <button class="btn btn-primary" id="register-btn">📅 Googleカレンダーに登録する</button>
+    <div id="register-actions">
+      <div class="action-row">
+        <button class="btn btn-ghost" onclick="goTo(3)">←</button>
+        <button class="btn btn-primary" id="register-btn">📅 Googleカレンダーに登録</button>
+      </div>
     </div>
   </div>
 
 </main>
 
 <script>
-// ===== CONSTANTS =====
 const CLIENT_ID = '255507800952-g6slstcrenqml9uk58l8k7f9naf3lr3o.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
 
@@ -480,54 +442,52 @@ const SHIFT_MASTER = {
 };
 
 const WEEKDAYS = ['日','月','火','水','木','金','土'];
-
 const GC_COLORS = [
-  { id: '1',  name: 'ラベンダー',  hex: '#7986CB' },
-  { id: '2',  name: 'セージ',      hex: '#33B679' },
-  { id: '3',  name: 'グレープ',    hex: '#8E24AA' },
-  { id: '4',  name: 'フラミンゴ',  hex: '#E67C73' },
-  { id: '5',  name: 'バナナ',      hex: '#F6BF26' },
-  { id: '6',  name: 'タンジェリン',hex: '#F4511E' },
-  { id: '7',  name: 'ピーコック',  hex: '#039BE5' },
-  { id: '8',  name: 'グラファイト',hex: '#616161' },
-  { id: '9',  name: 'ブルーベリー',hex: '#3F51B5' },
-  { id: '10', name: 'バジル',      hex: '#0B8043' },
-  { id: '11', name: 'トマト',      hex: '#D50000' },
+  { id:'1',  name:'ラベンダー',   hex:'#7986CB' },
+  { id:'2',  name:'セージ',       hex:'#33B679' },
+  { id:'3',  name:'グレープ',     hex:'#8E24AA' },
+  { id:'4',  name:'フラミンゴ',   hex:'#E67C73' },
+  { id:'5',  name:'バナナ',       hex:'#F6BF26' },
+  { id:'6',  name:'タンジェリン', hex:'#F4511E' },
+  { id:'7',  name:'ピーコック',   hex:'#039BE5' },
+  { id:'8',  name:'グラファイト', hex:'#616161' },
+  { id:'9',  name:'ブルーベリー', hex:'#3F51B5' },
+  { id:'10', name:'バジル',       hex:'#0B8043' },
+  { id:'11', name:'トマト',       hex:'#D50000' },
 ];
 
-// ===== STATE =====
-let uploadedBase64 = null;
-let uploadedType = null;
+let uploadedBase64 = null, uploadedType = null;
 let shifts = [];
 let accessToken = null;
-let selectedCalendarId = null;
-let selectedCalendarName = '';
-let selectedColorId = '7'; // ピーコック(青)デフォルト
+let selectedCalendarId = null, selectedCalendarName = '';
+let selectedColorId = '7';
 let currentStep = 1;
 
-// ===== NAVIGATION =====
+// ── Navigation ──────────────────────────────
 function goTo(step) {
   document.getElementById(`sec${currentStep}`).classList.remove('active');
-  document.getElementById(`dot${currentStep}`).classList.remove('active');
+  ['active','done'].forEach(c => document.getElementById(`dot${currentStep}`).classList.remove(c));
   document.getElementById(`dot${currentStep}`).classList.add('done');
   currentStep = step;
   document.getElementById(`sec${step}`).classList.add('active');
+  ['active','done'].forEach(c => document.getElementById(`dot${step}`).classList.remove(c));
   document.getElementById(`dot${step}`).classList.add('active');
-  document.getElementById(`dot${step}`).classList.remove('done');
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (step === 3) initStep3();
   if (step === 4) initStep4();
 }
 
-// ===== STEP 1: Upload & Analyze =====
-const dropZone = document.getElementById('drop-zone');
-const fileInput = document.getElementById('file-input');
-
-dropZone.addEventListener('click', () => fileInput.click());
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
-dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag'); handleFile(e.dataTransfer.files[0]); });
-fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+// ── Step 1: Upload ───────────────────────────
+document.getElementById('camera-btn').addEventListener('click', () => document.getElementById('camera-input').click());
+document.getElementById('gallery-btn').addEventListener('click', () => document.getElementById('file-input').click());
+document.getElementById('change-photo-btn').addEventListener('click', () => {
+  document.getElementById('preview-wrap').style.display = 'none';
+  document.getElementById('upload-btns').style.display = 'grid';
+  uploadedBase64 = null;
+  document.getElementById('analyze-btn').disabled = true;
+});
+document.getElementById('camera-input').addEventListener('change', e => handleFile(e.target.files[0]));
+document.getElementById('file-input').addEventListener('change', e => handleFile(e.target.files[0]));
 
 function handleFile(file) {
   if (!file) return;
@@ -538,6 +498,7 @@ function handleFile(file) {
     uploadedType = file.type || 'image/jpeg';
     document.getElementById('preview-img').src = dataUrl;
     document.getElementById('preview-wrap').style.display = 'block';
+    document.getElementById('upload-btns').style.display = 'none';
     document.getElementById('analyze-btn').disabled = false;
     setStatus('');
   };
@@ -553,33 +514,28 @@ function setStatus(msg, isError = false) {
 }
 
 document.getElementById('analyze-btn').addEventListener('click', async () => {
-  if (!uploadedBase64) return;
   const workerName = document.getElementById('worker-name').value.trim();
   const workMonth = document.getElementById('work-month').value.trim();
   if (!workerName) { setStatus('対象者の名前を入力してください', true); return; }
-  if (!workMonth) { setStatus('勤務表の年月を入力してください（例：2026-05）', true); return; }
+  if (!workMonth) { setStatus('年月を入力してください', true); return; }
+  if (!uploadedBase64) { setStatus('写真を選択してください', true); return; }
 
   document.getElementById('analyze-btn').disabled = true;
-  setStatus('⏳ AIが勤務表を解析中です...');
+  setStatus('⏳ AIが解析中です...');
 
   const shiftKeys = Object.keys(SHIFT_MASTER).join('、');
   const prompt = `この画像はとちの実保育園のシフト表です。
 対象者「${workerName}」の${workMonth}のシフトを読み取ってください。
 
-シフト記号は以下の通りです：${shiftKeys}、×（休み）、有休、振休
+シフト記号：${shiftKeys}
+×・有休・振休・公休などシフトがない日は含めないでください。
 
-以下のJSON形式のみで応答してください（説明・マークダウン不要）：
-{
-  "shifts": [
-    { "date": "${workMonth}-01", "code": "D+", "note": "" }
-  ]
-}
+JSON形式のみで応答してください（説明・マークダウン不要）：
+{"shifts":[{"date":"${workMonth}-01","code":"D+","note":""}]}
 
-ルール：
 - dateはYYYY-MM-DD形式
-- codeは上記記号のいずれか。×・有休・振休・公休などシフトがない日は含めない
-- 読み取れない場合はnoteに「要確認」と記載
-- 対象者の行を正確に特定して読み取ること`;
+- codeは上記記号のいずれか
+- 読み取れない場合はnoteに「要確認」`;
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -597,29 +553,17 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
         }]
       })
     });
-
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || 'APIエラー');
-
     const raw = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean);
-
+    const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
     shifts = (parsed.shifts || []).map(s => {
-      const master = SHIFT_MASTER[s.code] || {};
-      return {
-        date: s.date,
-        code: s.code,
-        start: master.start || '',
-        end: master.end || '',
-        note: s.note || ''
-      };
+      const m = SHIFT_MASTER[s.code] || {};
+      return { date: s.date, code: s.code, start: m.start || '', end: m.end || '', note: s.note || '' };
     });
-
     setStatus('');
-    renderTable();
+    renderShiftList();
     goTo(2);
-
   } catch (err) {
     setStatus('解析に失敗しました: ' + err.message, true);
   } finally {
@@ -627,90 +571,91 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
   }
 });
 
-// ===== STEP 2: Table =====
-function getWeekday(dateStr) {
+// ── Step 2: Edit ─────────────────────────────
+function getWd(dateStr) {
   try { return WEEKDAYS[new Date(dateStr).getDay()]; } catch { return ''; }
 }
+function wdColor(wd) {
+  return wd === '日' ? '#ff6b6b' : wd === '土' ? '#4af0ff' : 'var(--text2)';
+}
 
-function renderTable() {
-  const tbody = document.getElementById('shifts-body');
-  tbody.innerHTML = '';
-  const noteBox = document.getElementById('note-box');
-  const needsCheck = shifts.filter(s => s.note === '要確認').length;
-  noteBox.innerHTML = `<strong>✅ ${shifts.length}件のシフトを検出</strong>${needsCheck ? `　⚠️ <span style="color:#f6bf26">${needsCheck}件が要確認</span>` : ''}。内容を確認・編集してください。`;
-
-  const shiftOptions = Object.keys(SHIFT_MASTER).map(k => `<option value="${k}">${k}</option>`).join('');
+function renderShiftList() {
+  const list = document.getElementById('shifts-list');
+  list.innerHTML = '';
+  const warns = shifts.filter(s => s.note === '要確認').length;
+  document.getElementById('note-box').innerHTML =
+    `<strong style="color:var(--accent)">✅ ${shifts.length}件検出</strong>${warns ? `　<span class="warn-badge">⚠ ${warns}件要確認</span>` : ''}。内容を確認・編集してください。`;
 
   shifts.forEach((s, i) => {
-    const tr = document.createElement('tr');
-    const wd = getWeekday(s.date);
-    const wdColor = wd === '日' ? '#ff6b6b' : wd === '土' ? '#4af0ff' : 'var(--text2)';
-    tr.innerHTML = `
-      <td><input type="text" value="${s.date}" style="width:110px" data-i="${i}" data-f="date"></td>
-      <td style="color:${wdColor}; font-family:var(--font-mono); font-size:13px;">${wd}</td>
-      <td>
-        <select style="width:70px" data-i="${i}" data-f="code">
-          ${Object.keys(SHIFT_MASTER).map(k => `<option value="${k}"${k===s.code?' selected':''}>${k}</option>`).join('')}
-        </select>
-      </td>
-      <td class="shift-time">${s.start}</td>
-      <td class="shift-time">${s.end}</td>
-      <td><input type="text" value="${s.note}" placeholder="メモ" data-i="${i}" data-f="note"></td>
-      <td><button class="btn btn-danger del-btn" data-i="${i}">✕</button></td>
+    const wd = getWd(s.date);
+    const card = document.createElement('div');
+    card.className = 'shift-card';
+    card.innerHTML = `
+      <div class="shift-card-header">
+        <span class="shift-date-display">${s.date}</span>
+        <span class="shift-wd" style="color:${wdColor(wd)}">${wd}</span>
+        <span class="shift-time-display">${s.start}–${s.end}</span>
+      </div>
+      <div class="shift-card-body">
+        <div class="mini-field">
+          <label>日付</label>
+          <input type="date" value="${s.date}" data-i="${i}" data-f="date">
+        </div>
+        <div class="mini-field">
+          <label>記号</label>
+          <select data-i="${i}" data-f="code">
+            ${Object.keys(SHIFT_MASTER).map(k => `<option value="${k}"${k===s.code?' selected':''}>${k}</option>`).join('')}
+          </select>
+        </div>
+        <div class="mini-field full">
+          <label>メモ${s.note==='要確認'?'　<span class="warn-badge">⚠ 要確認</span>':''}</label>
+          <input type="text" value="${s.note}" placeholder="メモ（任意）" data-i="${i}" data-f="note">
+        </div>
+      </div>
+      <button class="del-btn" data-i="${i}">✕</button>
     `;
-    tbody.appendChild(tr);
+    list.appendChild(card);
   });
 
-  // Events
-  tbody.querySelectorAll('input, select').forEach(el => {
+  list.querySelectorAll('input, select').forEach(el => {
     el.addEventListener('change', () => {
-      const i = parseInt(el.dataset.i);
-      const f = el.dataset.f;
+      const i = parseInt(el.dataset.i), f = el.dataset.f;
       shifts[i][f] = el.value;
       if (f === 'code') {
-        const master = SHIFT_MASTER[el.value] || {};
-        shifts[i].start = master.start || '';
-        shifts[i].end = master.end || '';
-        renderTable();
+        const m = SHIFT_MASTER[el.value] || {};
+        shifts[i].start = m.start || '';
+        shifts[i].end = m.end || '';
+        renderShiftList();
       }
-      if (f === 'date') {
-        const row = el.closest('tr');
-        const wd = getWeekday(el.value);
-        const wdColor = wd === '日' ? '#ff6b6b' : wd === '土' ? '#4af0ff' : 'var(--text2)';
-        row.cells[1].style.color = wdColor;
-        row.cells[1].textContent = wd;
-      }
+      if (f === 'date') renderShiftList();
     });
   });
 
-  tbody.querySelectorAll('.del-btn').forEach(btn => {
+  list.querySelectorAll('.del-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       shifts.splice(parseInt(btn.dataset.i), 1);
-      renderTable();
+      renderShiftList();
     });
   });
 }
 
-document.getElementById('add-row-btn').addEventListener('click', () => {
+document.getElementById('add-shift-btn').addEventListener('click', () => {
   const last = shifts[shifts.length - 1];
-  const newDate = last ? last.date : document.getElementById('work-month').value + '-01';
-  const master = SHIFT_MASTER['D'];
-  shifts.push({ date: newDate, code: 'D', start: master.start, end: master.end, note: '' });
-  renderTable();
+  const m = SHIFT_MASTER['D'];
+  shifts.push({ date: last ? last.date : document.getElementById('work-month').value + '-01', code: 'D', start: m.start, end: m.end, note: '' });
+  renderShiftList();
+  setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
 });
 
 document.getElementById('to-step3-btn').addEventListener('click', () => {
-  if (shifts.length === 0) { alert('シフトが1件もありません'); return; }
+  if (!shifts.length) { alert('シフトが1件もありません'); return; }
   goTo(3);
 });
 
-// ===== STEP 3: Google Auth & Settings =====
+// ── Step 3: Auth & Settings ───────────────────
 function initStep3() {
   renderColorGrid();
-  if (accessToken) {
-    showLoggedIn();
-    loadCalendars();
-  }
+  if (accessToken) { showLoggedIn(); loadCalendars(); }
 }
 
 function renderColorGrid() {
@@ -731,9 +676,10 @@ function renderColorGrid() {
 }
 
 document.getElementById('login-btn').addEventListener('click', () => {
+  const redirectUri = window.location.href.split('?')[0].split('#')[0];
   const params = new URLSearchParams({
     client_id: CLIENT_ID,
-    redirect_uri: window.location.href.split('?')[0].split('#')[0],
+    redirect_uri: redirectUri,
     response_type: 'token',
     scope: SCOPES,
     prompt: 'select_account'
@@ -754,24 +700,23 @@ function checkToken() {
 function showLoggedIn() {
   document.getElementById('auth-badge').textContent = 'ログイン済み';
   document.getElementById('auth-badge').className = 'badge badge-ok';
-  document.getElementById('auth-text').textContent = 'Googleアカウントに接続されています';
+  document.getElementById('auth-text').textContent = 'Googleアカウントに接続済み';
   document.getElementById('login-btn').style.display = 'none';
   document.getElementById('cal-selector-wrap').style.display = 'block';
 }
 
 async function loadCalendars() {
   const listEl = document.getElementById('cal-list');
-  listEl.innerHTML = '<p style="color:var(--text2);font-size:13px;">カレンダーを読み込み中...</p>';
   try {
     const res = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
       headers: { Authorization: 'Bearer ' + accessToken }
     });
     const data = await res.json();
-    const cals = (data.items || []).filter(c => c.accessRole === 'owner' || c.accessRole === 'writer');
+    const cals = (data.items || []).filter(c => ['owner','writer'].includes(c.accessRole));
     listEl.innerHTML = '';
     cals.forEach(cal => {
       const div = document.createElement('div');
-      div.className = 'cal-option' + (cal.id === selectedCalendarId ? ' selected' : '');
+      div.className = 'cal-item' + (cal.id === selectedCalendarId ? ' selected' : '');
       div.innerHTML = `
         <div class="cal-dot" style="background:${cal.backgroundColor||'#4af0ff'}"></div>
         <div class="cal-name">${cal.summary}</div>
@@ -780,97 +725,87 @@ async function loadCalendars() {
       div.addEventListener('click', () => {
         selectedCalendarId = cal.id;
         selectedCalendarName = cal.summary;
-        document.querySelectorAll('.cal-option').forEach(el => el.classList.remove('selected'));
+        document.querySelectorAll('.cal-item').forEach(el => el.classList.remove('selected'));
         div.classList.add('selected');
         document.getElementById('to-step4-btn').disabled = false;
       });
       listEl.appendChild(div);
     });
-  } catch (e) {
-    listEl.innerHTML = '<p style="color:var(--danger);font-size:13px;">カレンダーの読み込みに失敗しました</p>';
+  } catch {
+    listEl.innerHTML = '<p style="color:var(--danger);font-size:13px;">読み込みに失敗しました</p>';
   }
 }
 
-// ===== STEP 4: Confirm & Register =====
+// ── Step 4: Confirm & Register ────────────────
 function initStep4() {
   const workerName = document.getElementById('worker-name').value.trim();
-  const colorName = GC_COLORS.find(c => c.id === selectedColorId)?.name || '';
-  const colorHex = GC_COLORS.find(c => c.id === selectedColorId)?.hex || '';
-
+  const color = GC_COLORS.find(c => c.id === selectedColorId);
   document.getElementById('confirm-summary').innerHTML = `
-    <div class="summary-row"><span>対象者</span><span>${workerName}</span></div>
-    <div class="summary-row"><span>登録件数</span><span>${shifts.length}件</span></div>
-    <div class="summary-row"><span>登録先カレンダー</span><span>${selectedCalendarName}</span></div>
-    <div class="summary-row"><span>イベントの色</span><span style="display:flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border-radius:50%;background:${colorHex};display:inline-block;"></span>${colorName}</span></div>
-    <div class="summary-row"><span>タイトル例</span><span style="font-family:var(--font-mono);font-size:12px;">${shifts[0] ? shifts[0].code + ' ' + shifts[0].start + '-' + shifts[0].end : ''}</span></div>
+    <div class="summary-row"><span class="label">対象者</span><span>${workerName}</span></div>
+    <div class="summary-row"><span class="label">登録件数</span><span>${shifts.length}件</span></div>
+    <div class="summary-row"><span class="label">登録先</span><span>${selectedCalendarName}</span></div>
+    <div class="summary-row"><span class="label">色</span><span style="display:flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border-radius:50%;background:${color?.hex};display:inline-block"></span>${color?.name}</span></div>
+    <div class="summary-row"><span class="label">タイトル例</span><span style="font-family:var(--font-mono);font-size:12px;">${shifts[0] ? shifts[0].code + ' ' + shifts[0].start + '–' + shifts[0].end : '–'}</span></div>
   `;
   document.getElementById('result-area').style.display = 'none';
-  document.getElementById('register-actions').style.display = 'flex';
+  document.getElementById('register-actions').innerHTML = `
+    <div class="action-row">
+      <button class="btn btn-ghost" onclick="goTo(3)">←</button>
+      <button class="btn btn-primary" id="register-btn">📅 Googleカレンダーに登録</button>
+    </div>
+  `;
+  document.getElementById('register-btn').addEventListener('click', doRegister);
 }
 
-document.getElementById('register-btn').addEventListener('click', async () => {
+async function doRegister() {
   const btn = document.getElementById('register-btn');
-  btn.disabled = true;
-  btn.textContent = '登録中...';
-
+  btn.disabled = true; btn.textContent = '登録中...';
   const resultList = document.getElementById('result-list');
   resultList.innerHTML = '';
   document.getElementById('result-area').style.display = 'block';
 
-  let successCount = 0;
-  let failCount = 0;
-
+  let ok = 0, ng = 0;
   for (const s of shifts) {
-    const title = `${s.code} ${s.start}-${s.end}`;
-    const startDt = `${s.date}T${s.start}:00`;
-    const endDt = `${s.date}T${s.end}:00`;
-
+    const title = `${s.code} ${s.start}–${s.end}`;
     const body = {
       summary: title,
-      start: { dateTime: startDt, timeZone: 'Asia/Tokyo' },
-      end: { dateTime: endDt, timeZone: 'Asia/Tokyo' },
+      start: { dateTime: `${s.date}T${s.start}:00`, timeZone: 'Asia/Tokyo' },
+      end:   { dateTime: `${s.date}T${s.end}:00`,   timeZone: 'Asia/Tokyo' },
       colorId: selectedColorId,
     };
     if (s.note) body.description = s.note;
-
     try {
-      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(selectedCalendarId)}/events`, {
-        method: 'POST',
-        headers: {
-          Authorization: 'Bearer ' + accessToken,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
-      });
+      const res = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(selectedCalendarId)}/events`,
+        { method:'POST', headers:{ Authorization:'Bearer '+accessToken, 'Content-Type':'application/json' }, body: JSON.stringify(body) }
+      );
       if (!res.ok) throw new Error((await res.json()).error?.message);
-      successCount++;
-      addResult(resultList, `✅ ${s.date}（${getWeekday(s.date)}）${title}`, true);
-    } catch (e) {
-      failCount++;
+      ok++;
+      addResult(resultList, `✅ ${s.date}（${getWd(s.date)}）${title}`, true);
+    } catch(e) {
+      ng++;
       addResult(resultList, `❌ ${s.date} — ${e.message}`, false);
     }
     await new Promise(r => setTimeout(r, 120));
   }
 
-  btn.textContent = `完了 ${successCount}件登録 ${failCount ? '/ ' + failCount + '件失敗' : ''}`;
   document.getElementById('register-actions').innerHTML = `
-    <div style="width:100%;text-align:center;padding:16px 0;">
-      <div style="font-size:32px;margin-bottom:8px;">🎉</div>
-      <div style="font-size:16px;font-weight:700;color:var(--accent);">${successCount}件をGoogleカレンダーに登録しました</div>
-      <div style="font-size:13px;color:var(--text2);margin-top:4px;">TimeTreeのカレンダー設定でGoogleカレンダー連携をONにすると自動反映されます</div>
-      <button class="btn btn-secondary" onclick="location.reload()" style="margin-top:20px;">最初からやり直す</button>
+    <div class="complete-box">
+      <div class="emoji">🎉</div>
+      <h3>${ok}件を登録しました${ng ? `（${ng}件失敗）` : ''}</h3>
+      <p>TimeTreeのカレンダー設定から<br>Googleカレンダー連携をONにすると<br>自動で反映されます</p>
+      <button class="btn btn-secondary" style="margin-top:20px;" onclick="location.reload()">最初からやり直す</button>
     </div>
   `;
-});
+}
 
 function addResult(container, msg, ok) {
   const div = document.createElement('div');
   div.className = 'result-item';
-  div.innerHTML = `<span class="${ok ? 'result-ok' : 'result-err'}">${msg}</span>`;
+  div.innerHTML = `<span style="color:${ok?'var(--accent)':'var(--danger)'}">${msg}</span>`;
   container.appendChild(div);
 }
 
-// ===== INIT =====
 checkToken();
 </script>
 </body>
