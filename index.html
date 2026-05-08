@@ -291,7 +291,7 @@
     <h1>シフトカレンダー</h1>
     <p>勤務表 → Googleカレンダー</p>
   </div>
-  <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-right:8px;">v1.9</div>
+  <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-right:8px;">v2.0</div>
   <div class="step-dots">
     <div class="dot active" id="dot1"></div>
     <div class="dot" id="dot2"></div>
@@ -436,6 +436,7 @@ function getGeminiUrl() {
 }
 
 const SHIFT_MASTER = {
+  '◎':  { start: null, end: null, title: '土曜出勤' },
   'A':  { start: '07:00', end: '16:00' },
   'A+': { start: '07:15', end: '16:15' },
   'B':  { start: '07:30', end: '16:30' },
@@ -555,6 +556,7 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
 ${shiftKeys}
 ※記号の後ろに「+」がつく場合があります（例：D+、C+）
 ※小さい上付き文字の場合も「+」として読んでください
+※「◎」は土曜出勤を意味する特殊記号です。必ず含めてください
 
 【重要な注意事項】
 1. 必ず「${workerName}」の行のみを読み取ること（他の職員の行を混同しない）
@@ -589,7 +591,7 @@ ${shiftKeys}
     const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
     shifts = (parsed.shifts || []).map(s => {
       const m = SHIFT_MASTER[s.code] || {};
-      return { date: s.date, code: s.code, start: m.start || '', end: m.end || '', note: s.note || '' };
+      return { date: s.date, code: s.code, start: m.start || '', end: m.end || '', note: s.note || '', special: !!m.title };
     });
     setStatus('');
     renderShiftList();
@@ -837,8 +839,15 @@ async function doRegister() {
 
   let ok = 0, ng = 0;
   for (const s of shifts) {
-    const title = `${s.code} ${s.start}–${s.end}`;
-    const body = {
+    const master = SHIFT_MASTER[s.code] || {};
+    const isSpecial = master.title && !master.start;
+    const title = isSpecial ? master.title : `${s.code} ${s.start}–${s.end}`;
+    const body = isSpecial ? {
+      summary: title,
+      start: { date: s.date },
+      end:   { date: s.date },
+      colorId: selectedColorId,
+    } : {
       summary: title,
       start: { dateTime: `${s.date}T${s.start}:00`, timeZone: 'Asia/Tokyo' },
       end:   { dateTime: `${s.date}T${s.end}:00`,   timeZone: 'Asia/Tokyo' },
