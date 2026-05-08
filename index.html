@@ -291,7 +291,7 @@
     <h1>シフトカレンダー</h1>
     <p>勤務表 → Googleカレンダー</p>
   </div>
-  <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-right:8px;">v1.6</div>
+  <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-right:8px;">v1.7</div>
   <div class="step-dots">
     <div class="dot active" id="dot1"></div>
     <div class="dot" id="dot2"></div>
@@ -338,9 +338,14 @@
         <label>対象者の名前（勤務表上の表記）</label>
         <input type="text" id="worker-name" placeholder="例：清水 莉帆" autocomplete="off" value="菅原 恵美">
       </div>
-      <div class="field" style="margin-bottom:0">
+      <div class="field">
         <label>勤務表の年月</label>
         <input type="month" id="work-month">
+      </div>
+      <div class="field" style="margin-bottom:0" id="apikey-field">
+        <label>Gemini APIキー <span style="color:var(--accent);font-size:10px;">※初回のみ</span></label>
+        <input type="password" id="gemini-key-input" placeholder="AIzaSy..." autocomplete="off">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">入力すると次回から自動入力されます</div>
       </div>
     </div>
 
@@ -424,8 +429,11 @@
 <script>
 const CLIENT_ID = '255507800952-g6slstcrenqml9uk58l8k7f9naf3lr3o.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly';
-const GEMINI_API_KEY = 'AIzaSyBu1PfKjye0e7Po4QkqaJU4X9sI8ZGNROE';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+// GeminiAPIキーはlocalStorageから取得（HTMLには直書きしない）
+function getGeminiUrl() {
+  const key = localStorage.getItem('gemini_api_key');
+  return `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+}
 
 const SHIFT_MASTER = {
   'A':  { start: '07:00', end: '16:00' },
@@ -523,6 +531,11 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
   if (!workMonth) { setStatus('年月を入力してください', true); return; }
   if (!uploadedBase64) { setStatus('写真を選択してください', true); return; }
 
+  // APIキーの保存・確認
+  const keyInput = document.getElementById('gemini-key-input').value.trim();
+  if (keyInput) localStorage.setItem('gemini_api_key', keyInput);
+  if (!localStorage.getItem('gemini_api_key')) { setStatus('Gemini APIキーを入力してください', true); return; }
+
   document.getElementById('analyze-btn').disabled = true;
   setStatus('⏳ AIが解析中です...');
 
@@ -541,7 +554,7 @@ JSON形式のみで応答してください（説明・マークダウン不要�
 - 読み取れない場合はnoteに「要確認」`;
 
   try {
-    const res = await fetch(GEMINI_URL, {
+    const res = await fetch(getGeminiUrl(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -847,6 +860,14 @@ function addResult(container, msg, ok) {
   container.appendChild(div);
 }
 
+// 保存済みAPIキーがあれば入力欄を非表示
+(function() {
+  const saved = localStorage.getItem('gemini_api_key');
+  if (saved) {
+    const f = document.getElementById('apikey-field');
+    if (f) f.style.display = 'none';
+  }
+})();
 checkToken();
 </script>
 </body>
