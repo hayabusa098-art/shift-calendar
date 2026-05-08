@@ -291,7 +291,7 @@
     <h1>シフトカレンダー</h1>
     <p>勤務表 → Googleカレンダー</p>
   </div>
-  <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-right:8px;">v1.5</div>
+  <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-right:8px;">v1.6</div>
   <div class="step-dots">
     <div class="dot active" id="dot1"></div>
     <div class="dot" id="dot2"></div>
@@ -423,7 +423,7 @@
 
 <script>
 const CLIENT_ID = '255507800952-g6slstcrenqml9uk58l8k7f9naf3lr3o.apps.googleusercontent.com';
-const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
+const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly';
 const GEMINI_API_KEY = 'AIzaSyBu1PfKjye0e7Po4QkqaJU4X9sI8ZGNROE';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
